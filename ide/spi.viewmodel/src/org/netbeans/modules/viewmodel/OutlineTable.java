@@ -794,12 +794,13 @@ ExplorerManager.Provider, PropertyChangeListener {
             } else {
                 TableColumn tc = allColumns.get(0); //tcm.getColumn(0);
                 tableColumns[i] = tc;
+                String name = tc.getHeaderValue().toString();
                 if (columns[i] instanceof Column) {
                     Column c = (Column) columns[i];
                     tc.setCellEditor(c.getTableCellEditor());
                     tc.setPreferredWidth(c.getColumnWidth());
+                    name = c.getName();
                 }
-                String name = tc.getHeaderValue().toString();
                 tc.setCellEditor(new DelegatingCellEditor(
                         name,
                         treeTable.getTable().getCellEditor(0, 0)));
