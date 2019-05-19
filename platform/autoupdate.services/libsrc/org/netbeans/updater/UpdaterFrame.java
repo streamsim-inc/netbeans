@@ -225,6 +225,13 @@ implements UpdatingContext {
     * @param args the command line arguments
     */
     public static void main (String... args) {
+        if (System.getProperty("java.util.logging.SimpleFormatter.format") == null) {
+            // date, source, logger, level, message, thrown
+            System.setProperty("java.util.logging.SimpleFormatter.format",
+                    // 0000/00/00 00:00:00 level [source]: message
+                    "%1$tY/%1$tm/%1$td %1$tH:%1$tM:%1$tS %4$s [%2$s]: %5$s%6$s%n"
+            );
+        }
         UpdaterFrame panel = new UpdaterFrame (args);
         if (!panel.noSplash) {
             panel.showSplash ();
