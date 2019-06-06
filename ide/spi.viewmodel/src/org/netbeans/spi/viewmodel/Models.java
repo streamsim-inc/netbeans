@@ -20,6 +20,7 @@
 package org.netbeans.spi.viewmodel;
 
 import java.awt.Component;
+import java.awt.Image;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.event.ActionEvent;
@@ -390,6 +391,10 @@ public final class Models {
                 ml.asynchModelFilters
             ),
             null, null,
+            createCompoundIconNodeModel (
+                new DelegatingIconNodeModel (ml.iconNodeModels),
+                ml.iconNodeModelFilters
+            ),
             propertiesHelpID
         );
         } else {
@@ -431,6 +436,10 @@ public final class Models {
             createCompoundTablePropertyEditorModel (
                 new DelegatingTablePropertyEditorsModel(ml.tablePropertyEditorsModels),
                 ml.tablePropertyEditorsModelFilters
+            ),
+            createCompoundIconNodeModel (
+                new DelegatingIconNodeModel (ml.iconNodeModels),
+                ml.iconNodeModelFilters
             ),
             propertiesHelpID
         );
@@ -661,6 +670,15 @@ public final class Models {
         return asynchModel;
     }
     
+    private static IconNodeModel createCompoundIconNodeModel(
+            IconNodeModel iconNodeModel,
+            List<IconNodeModelFilter> filters
+    ) {
+        for (IconNodeModelFilter filter : filters) {
+            iconNodeModel = new CompoundIconNodeModel(iconNodeModel, filter);
+        }
+        return iconNodeModel;
+    }
     
     // innerclasses ............................................................
     
@@ -2185,6 +2203,105 @@ public final class Models {
             return asynchModelFilter.asynchronous(asynchModel.asynchronous(asynchCall, node), asynchCall, node);
         }
 
+    }
+
+    private final static class CompoundIconNodeModel implements IconNodeModel {
+
+        private final IconNodeModel iconNodeModel;
+        private final IconNodeModelFilter iconNodeModelFilter;
+
+        CompoundIconNodeModel(IconNodeModel iconNodeModel, IconNodeModelFilter iconNodeModelFilter) {
+            this.iconNodeModel = iconNodeModel;
+            this.iconNodeModelFilter = iconNodeModelFilter;
+        }
+
+        @Override
+        public Image getIcon(Object node, int type) throws UnknownTypeException {
+            return iconNodeModelFilter.getIcon(iconNodeModel, node, type);
+        }
+
+        @Override
+        public Image getOpenedIcon(Object node, int type) throws UnknownTypeException {
+            return iconNodeModelFilter.getOpenedIcon(iconNodeModel, node, type);
+        }
+
+    }
+
+    private final static class DelegatingIconNodeModel implements IconNodeModel {
+
+        private IconNodeModel[] models;
+        private HashMap<String, IconNodeModel> classNameToModel = new HashMap<String, IconNodeModel>();
+
+        /**
+         * Creates new instance of DelegatingIconNodeModel for given list of
+         * IconNodeModels.
+         *
+         * @param models a list of IconNodeModel
+         */
+        DelegatingIconNodeModel(List<IconNodeModel> models) {
+            this(convert(models));
+        }
+
+        private static IconNodeModel[] convert(List<IconNodeModel> l) {
+            IconNodeModel[] models = new IconNodeModel[l.size()];
+            return l.toArray(models);
+        }
+
+        /**
+         * Creates new instance of DelegatingIconNodeModel for given array of
+         * IconNodeModels.
+         *
+         * @param models a array of IconNodeModels
+         */
+        DelegatingIconNodeModel(IconNodeModel[] models) {
+            this.models = models;
+        }
+
+        @Override
+        public Image getIcon(Object node, int type) throws UnknownTypeException {
+            IconNodeModel model = classNameToModel.get(
+                    node.getClass().getName()
+            );
+            if (model != null) {
+                try {
+                    return model.getIcon(node, type);
+                } catch (UnknownTypeException e) {
+                }
+            }
+            int i, k = models.length;
+            for (i = 0; i < k; i++) {
+                try {
+                    Image v = models[i].getIcon(node, type);
+                    classNameToModel.put(node.getClass().getName(), models[i]);
+                    return v;
+                } catch (UnknownTypeException e) {
+                }
+            }
+            throw new UnknownTypeException(node);
+        }
+
+        @Override
+        public Image getOpenedIcon(Object node, int type) throws UnknownTypeException {
+            IconNodeModel model = classNameToModel.get(
+                    node.getClass().getName()
+            );
+            if (model != null) {
+                try {
+                    return model.getOpenedIcon(node, type);
+                } catch (UnknownTypeException e) {
+                }
+            }
+            int i, k = models.length;
+            for (i = 0; i < k; i++) {
+                try {
+                    Image v = models[i].getOpenedIcon(node, type);
+                    classNameToModel.put(node.getClass().getName(), models[i]);
+                    return v;
+                } catch (UnknownTypeException e) {
+                }
+            }
+            throw new UnknownTypeException(node);
+        }
     }
 
     /**
@@ -4235,6 +4352,7 @@ public final class Models {
                                                        TableHTMLModel,
                                                        TreeExpansionModel,
                                                        TableRendererModel,
+                                                       IconNodeModel,
                                                        TablePropertyEditorsModel {
 
         private ReorderableTreeModel treeModel;
@@ -4248,6 +4366,7 @@ public final class Models {
         private TablePropertyEditorsModel tablePropertyEditorsModel;
         private TreeExpansionModel treeExpansionModel;
         private AsynchronousModel asynchModel;
+        private IconNodeModel iconNodeModel;
 
         private CompoundModel   mainSubModel;
         private CompoundModel[] subModels;
@@ -4280,6 +4399,7 @@ public final class Models {
             AsynchronousModel asynchModel,
             TableRendererModel tableRendererModel,
             TablePropertyEditorsModel tablePropertyEditorsModel,
+            IconNodeModel iconNodeModel,
             String propertiesHelpID
         ) {
             if (treeModel == null || nodeModel == null || tableModel == null ||
@@ -4310,6 +4430,7 @@ public final class Models {
                 new ColumnModel [columnModels.size ()]
             );
             this.asynchModel = asynchModel;
+            this.iconNodeModel = iconNodeModel;
             this.propertiesHelpID = propertiesHelpID;
         }
 
@@ -4493,6 +4614,22 @@ public final class Models {
                 }
             }
             return nodeModel.getShortDescription (node);
+        }
+
+        @Override
+        public Image getIcon(Object node, int type) throws UnknownTypeException {
+            if (iconNodeModel != null) {
+                return iconNodeModel.getIcon(node, type);
+            }
+            return null;
+        }
+
+        @Override
+        public Image getOpenedIcon(Object node, int type) throws UnknownTypeException {
+            if (iconNodeModel != null) {
+                return iconNodeModel.getOpenedIcon(node, type);
+            }
+            return null;
         }
 
         /**
@@ -4912,6 +5049,8 @@ public final class Models {
         public List<TableHTMLModelFilter>      tableHtmlModelFilters = Collections.emptyList();
         public List<TablePropertyEditorsModel> tablePropertyEditorsModels = Collections.emptyList();
         public List<TablePropertyEditorsModelFilter> tablePropertyEditorsModelFilters = Collections.emptyList();
+        public List<IconNodeModel> iconNodeModels = Collections.emptyList();
+        public List<IconNodeModelFilter> iconNodeModelFilters = Collections.emptyList();
 
         public void addOtherModels(List<? extends Model> otherModels) {
             Iterator it = otherModels.iterator ();
@@ -5030,6 +5169,14 @@ public final class Models {
                 if (model instanceof ColumnModel && !columnModels.contains((ColumnModel) model)) {
                     columnModels = new ArrayList<ColumnModel>(columnModels);
                     columnModels.add((ColumnModel) model);
+                }
+                if (model instanceof IconNodeModel) {
+                    iconNodeModels = new ArrayList<IconNodeModel>(iconNodeModels);
+                    iconNodeModels.add((IconNodeModel) model);
+                }
+                if (model instanceof IconNodeModelFilter) {
+                    iconNodeModelFilters = new ArrayList<IconNodeModelFilter>(iconNodeModelFilters);
+                    iconNodeModelFilters.add((IconNodeModelFilter) model);
                 }
             }
         }

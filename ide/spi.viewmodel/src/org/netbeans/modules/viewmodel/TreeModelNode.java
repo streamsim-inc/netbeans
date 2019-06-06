@@ -903,6 +903,15 @@ public class TreeModelNode extends AbstractNode {
 
     @Override
     public Image getIcon(int type) {
+        try {
+            Image icon = model.getIcon(object, type);
+            if (icon != null) {
+                return icon;
+            }
+        } catch (UnknownTypeException ex) {
+            Logger.getLogger(TreeModelNode.class.getName()).log(Level.FINE, "no icon from model"); // NOI18N
+        }
+
         if (!iconLoaded) {
             try {
                 setModelIcon();
@@ -916,6 +925,15 @@ public class TreeModelNode extends AbstractNode {
 
     @Override
     public Image getOpenedIcon(int type) {
+        try {
+            Image icon = model.getOpenedIcon(object, type);
+            if (icon != null) {
+                return icon;
+            }
+        } catch (UnknownTypeException ex) {
+            Logger.getLogger(TreeModelNode.class.getName()).log(Level.FINE, "no icon from model"); // NOI18N
+        }
+
         if (!iconLoaded) {
             try {
                 setModelIcon();
