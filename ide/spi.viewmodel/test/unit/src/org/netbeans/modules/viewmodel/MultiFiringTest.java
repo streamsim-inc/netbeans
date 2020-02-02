@@ -118,7 +118,7 @@ public class MultiFiringTest extends NbTestCase implements ModelListener {
 
     public void testBasicModelTableSingleFiring() {
         setUpBasicModel();
-        m.fire(new ModelEvent.TableValueChanged(m, "a", null));
+        m.fire(new ModelEvent.TableValueChanged(m, "a"));
         assertEquals("Firing occurred", 1, changed);
     }
 
@@ -136,7 +136,7 @@ public class MultiFiringTest extends NbTestCase implements ModelListener {
 
     public void testComplexModelTableSingleFiring() {
         setUpComplexModel();
-        m.fire(new ModelEvent.TableValueChanged(m, "a", null));
+        m.fire(new ModelEvent.TableValueChanged(m, "a"));
         assertEquals("Firing occurred", 1, changed);
     }
 

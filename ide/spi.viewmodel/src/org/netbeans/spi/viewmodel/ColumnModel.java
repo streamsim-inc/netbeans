@@ -167,7 +167,9 @@ public abstract class ColumnModel implements Model {
      *        in descending order
      */
     public void setSortedDescending (boolean sortedDescending) {}
-    
+
+    private int currentOrderNumber = -1;
+
     /**
      * Should return current order number of this column. Default value is 
      * <code>-1</code>.
@@ -175,7 +177,7 @@ public abstract class ColumnModel implements Model {
      * @return current order number of this column or <code>-1</code>
      */
     public int getCurrentOrderNumber () {
-        return -1;
+        return currentOrderNumber;
     }
     
     /**
@@ -184,7 +186,9 @@ public abstract class ColumnModel implements Model {
      *
      * @param newOrderNumber new order number
      */
-    public void setCurrentOrderNumber (int newOrderNumber) {}
+    public void setCurrentOrderNumber (int newOrderNumber) {
+        this.currentOrderNumber = newOrderNumber;
+    }
     
     /**
      * Return column width of this column.

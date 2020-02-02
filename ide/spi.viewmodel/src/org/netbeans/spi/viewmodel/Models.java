@@ -20,6 +20,7 @@
 package org.netbeans.spi.viewmodel;
 
 import java.awt.Component;
+import java.awt.Image;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.event.ActionEvent;
@@ -47,6 +48,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -67,6 +69,7 @@ import org.openide.explorer.view.OutlineView;
 import org.openide.explorer.view.TreeView;
 import org.openide.nodes.Node;
 import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 import org.openide.util.datatransfer.PasteType;
 import org.openide.windows.TopComponent;
 
@@ -390,6 +393,9 @@ public final class Models {
                 ml.asynchModelFilters
             ),
             null, null,
+            ml.iconNodeModel,
+            ml.lookupNodeModel,
+            ml.tablePasteModel,
             propertiesHelpID
         );
         } else {
@@ -432,6 +438,9 @@ public final class Models {
                 new DelegatingTablePropertyEditorsModel(ml.tablePropertyEditorsModels),
                 ml.tablePropertyEditorsModelFilters
             ),
+            ml.iconNodeModel,
+            ml.lookupNodeModel,
+            ml.tablePasteModel,
             propertiesHelpID
         );
         }
@@ -1067,7 +1076,7 @@ public final class Models {
         } else if (event instanceof ModelEvent.TableValueChanged) {
             newEvent = new ModelEvent.TableValueChanged(newSource,
                     ((ModelEvent.TableValueChanged) event).getNode(),
-                    ((ModelEvent.TableValueChanged) event).getColumnID(),
+                    ((ModelEvent.TableValueChanged) event).getColumnIDs(),
                     ((ModelEvent.TableValueChanged) event).getChange());
         } else if (event instanceof ModelEvent.TreeChanged) {
             newEvent = new ModelEvent.TreeChanged(newSource);
@@ -1387,6 +1396,23 @@ public final class Models {
             }
         }
 
+        @Override
+        public void setSelected(Object... nodes) throws UnknownTypeException {
+            if (cfilter != null) {
+                cfilter.setSelected(model, nodes);
+            } else {
+                model.setSelected(nodes);
+            }
+        }
+
+        @Override
+        public void setUnselected(Object... nodes) throws UnknownTypeException {
+            if (cfilter != null) {
+                cfilter.setUnselected(model, nodes);
+            } else {
+                model.setUnselected(nodes);
+            }
+        }
     }
     
     /**
@@ -3758,6 +3784,59 @@ public final class Models {
             }
         }
 
+        @Override
+        public void setSelected(Object... nodes) throws UnknownTypeException {
+            UnknownTypeException uex = null;
+            int i, k = models.length;
+            boolean isChecked = false;
+            for (i = 0; i < k; i++) {
+                if (models[i] instanceof CheckNodeModel) {
+                    try {
+                        ((CheckNodeModel) models[i]).setSelected(nodes);
+                        return;
+                    } catch (UnknownTypeException e) {
+                        uex = e;
+                    }
+                    isChecked = true;
+                }
+            }
+            if (!isChecked) {
+                Exceptions.printStackTrace(new IllegalStateException("Can not set selected state to model " + this));
+                return;
+            }
+            if (uex != null) {
+                throw uex;
+            } else {
+                throw new UnknownTypeException(nodes);
+            }
+        }
+
+        @Override
+        public void setUnselected(Object... nodes) throws UnknownTypeException {
+            UnknownTypeException uex = null;
+            int i, k = models.length;
+            boolean isChecked = false;
+            for (i = 0; i < k; i++) {
+                if (models[i] instanceof CheckNodeModel) {
+                    try {
+                        ((CheckNodeModel) models[i]).setUnselected(nodes);
+                        return;
+                    } catch (UnknownTypeException e) {
+                        uex = e;
+                    }
+                    isChecked = true;
+                }
+            }
+            if (!isChecked) {
+                Exceptions.printStackTrace(new IllegalStateException("Can not set selected state to model " + this));
+                return;
+            }
+            if (uex != null) {
+                throw uex;
+            } else {
+                throw new UnknownTypeException(nodes);
+            }
+        }
     }
 
     /**
@@ -4235,7 +4314,10 @@ public final class Models {
                                                        TableHTMLModel,
                                                        TreeExpansionModel,
                                                        TableRendererModel,
-                                                       TablePropertyEditorsModel {
+                                                       TablePropertyEditorsModel,
+                                                       IconNodeModel,
+                                                       LookupNodeModel,
+                                                       TablePasteModel {
 
         private ReorderableTreeModel treeModel;
         private ExtendedNodeModel nodeModel;
@@ -4248,6 +4330,9 @@ public final class Models {
         private TablePropertyEditorsModel tablePropertyEditorsModel;
         private TreeExpansionModel treeExpansionModel;
         private AsynchronousModel asynchModel;
+        private IconNodeModel iconNodeModel;
+        private LookupNodeModel lookupNodeModel;
+        private TablePasteModel tablePasteModel;
 
         private CompoundModel   mainSubModel;
         private CompoundModel[] subModels;
@@ -4280,6 +4365,9 @@ public final class Models {
             AsynchronousModel asynchModel,
             TableRendererModel tableRendererModel,
             TablePropertyEditorsModel tablePropertyEditorsModel,
+            IconNodeModel iconNodeModel,
+            LookupNodeModel lookupNodeModel,
+            TablePasteModel tablePasteModel,
             String propertiesHelpID
         ) {
             if (treeModel == null || nodeModel == null || tableModel == null ||
@@ -4310,6 +4398,9 @@ public final class Models {
                 new ColumnModel [columnModels.size ()]
             );
             this.asynchModel = asynchModel;
+            this.iconNodeModel = iconNodeModel;
+            this.lookupNodeModel = lookupNodeModel;
+            this.tablePasteModel = tablePasteModel;
             this.propertiesHelpID = propertiesHelpID;
         }
 
@@ -4493,6 +4584,30 @@ public final class Models {
                 }
             }
             return nodeModel.getShortDescription (node);
+        }
+
+        @Override
+        public Image getIcon(Object node, int type) throws UnknownTypeException {
+            if (iconNodeModel != null) {
+                return iconNodeModel.getIcon(node, type);
+            }
+            return null;
+        }
+
+        @Override
+        public Image getOpenedIcon(Object node, int type) throws UnknownTypeException {
+            if (iconNodeModel != null) {
+                return iconNodeModel.getOpenedIcon(node, type);
+            }
+            return null;
+        }
+
+        @Override
+        public Lookup getLookup(Object node) throws UnknownTypeException {
+            if (lookupNodeModel != null) {
+                return lookupNodeModel.getLookup(node);
+            }
+            return Lookup.EMPTY;
         }
 
         /**
@@ -4758,7 +4873,34 @@ public final class Models {
 
         @Override
         public PasteType[] getPasteTypes(Object node, Transferable t) throws UnknownTypeException {
-            return nodeModel.getPasteTypes(node, t);
+            final PasteType[] pasteTypes = nodeModel.getPasteTypes(node, t);
+            if (pasteTypes == null) {
+                return getPasteTypes(t, Collections.singletonList(node), Collections.<String>emptyList());
+            }
+            return pasteTypes;
+        }
+
+        @Override
+        public PasteType[] getPasteTypes(Transferable t, List<Object> selectedNodes, List<String> selectedColumnIds) {
+            if (tablePasteModel != null) {
+                return tablePasteModel.getPasteTypes(t, selectedNodes, selectedColumnIds);
+            }
+            return null;
+        }
+
+        @Override
+        public boolean allowsSmartPaste() {
+            return tablePasteModel != null ? tablePasteModel.allowsSmartPaste() : true;
+        }
+
+        @Override
+        public int getSelectionModel() {
+            return tablePasteModel != null ? tablePasteModel.getSelectionModel() : ListSelectionModel.SINGLE_INTERVAL_SELECTION;
+        }
+
+        @Override
+        public boolean isColumnSelectionAllowed() {
+            return tablePasteModel != null ? tablePasteModel.isColumnSelectionAllowed() : true;
         }
 
         @Override
@@ -4817,6 +4959,24 @@ public final class Models {
                 cnodeModel.setSelected(node, selected);
             } else {
                 Exceptions.printStackTrace(new IllegalStateException("Can not set selected state to model "+nodeModel));
+            }
+        }
+
+        @Override
+        public void setSelected(Object... nodes) throws UnknownTypeException {
+            if (cnodeModel != null) {
+                cnodeModel.setSelected(nodes);
+            } else {
+                Exceptions.printStackTrace(new IllegalStateException("Can not set selected state to model " + nodeModel));
+            }
+        }
+
+        @Override
+        public void setUnselected(Object... nodes) throws UnknownTypeException {
+            if (cnodeModel != null) {
+                cnodeModel.setUnselected(nodes);
+            } else {
+                Exceptions.printStackTrace(new IllegalStateException("Can not set selected state to model " + nodeModel));
             }
         }
 
@@ -4912,6 +5072,9 @@ public final class Models {
         public List<TableHTMLModelFilter>      tableHtmlModelFilters = Collections.emptyList();
         public List<TablePropertyEditorsModel> tablePropertyEditorsModels = Collections.emptyList();
         public List<TablePropertyEditorsModelFilter> tablePropertyEditorsModelFilters = Collections.emptyList();
+        public IconNodeModel iconNodeModel = null;
+        public LookupNodeModel lookupNodeModel = null;
+        public TablePasteModel tablePasteModel;
 
         public void addOtherModels(List<? extends Model> otherModels) {
             Iterator it = otherModels.iterator ();
@@ -5030,6 +5193,16 @@ public final class Models {
                 if (model instanceof ColumnModel && !columnModels.contains((ColumnModel) model)) {
                     columnModels = new ArrayList<ColumnModel>(columnModels);
                     columnModels.add((ColumnModel) model);
+                }
+
+                if (model instanceof IconNodeModel) {
+                    iconNodeModel = (IconNodeModel) model;
+                }
+                if (model instanceof LookupNodeModel) {
+                    lookupNodeModel = (LookupNodeModel) model;
+                }
+                if (model instanceof TablePasteModel) {
+                    tablePasteModel = (TablePasteModel) model;
                 }
             }
         }

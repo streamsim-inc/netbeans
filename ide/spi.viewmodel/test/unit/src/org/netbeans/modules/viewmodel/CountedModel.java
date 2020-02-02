@@ -201,6 +201,22 @@ class CountedModel implements TreeModel, ExtendedNodeModel, CheckNodeModel, Tabl
         selectedNodes.put(node, selected);
     }
 
+    @Override
+    public void setSelected(Object... nodes) throws UnknownTypeException {
+        countCall("setSelected", nodes);
+        for (Object node : nodes) {
+            selectedNodes.put(node, true);
+        }
+    }
+
+    @Override
+    public void setUnselected(Object... nodes) throws UnknownTypeException {
+        countCall("setUnselected", nodes);
+        for (Object node : nodes) {
+            selectedNodes.put(node, false);
+        }
+    }
+
     public Object getValueAt(Object node, String columnID) throws UnknownTypeException {
         countCall("getValueAt", node, columnID);
         Map<String, Object> values = changedValues.get(node);

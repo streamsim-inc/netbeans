@@ -65,4 +65,7 @@ public interface CheckNodeModel extends NodeModel {
      */
     void setSelected(Object node, Boolean selected) throws UnknownTypeException;
 
+    void setSelected(Object... nodes) throws UnknownTypeException;
+
+    void setUnselected(Object... nodes) throws UnknownTypeException;
 }

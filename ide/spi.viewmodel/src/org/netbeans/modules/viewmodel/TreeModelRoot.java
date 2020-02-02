@@ -25,6 +25,7 @@ import java.lang.ref.WeakReference;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.WeakHashMap;
 import java.util.logging.Level;
@@ -334,11 +335,39 @@ public class TreeModelRoot {
                             //System.err.println("  nodes = "+Arrays.toString(tmNodes));
                             int change = tvEvent.getChange();
                             for (TreeModelNode tmNode : tmNodes) {
-                                String column = tvEvent.getColumnID();
-                                if (column != null) {
-                                    tmNode.refreshColumn(column, change);
-                                } else {
+                                Collection<String> columnIDs = tvEvent.getColumnIDs();
+                                if (columnIDs.isEmpty() || (columnIDs.size() == 1 && columnIDs.contains(null))) {
                                     tmNode.refresh(model);
+                                } else {
+                                    for (String column : columnIDs) {
+                                        if (column != null) {
+                                            tmNode.refreshColumn(column, change);
+                                        }
+                                    }
+                                }
+                            }
+                            return; // We're done
+                        } else { // Refresh all nodes
+                            List<TreeModelNode> nodes = new ArrayList<TreeModelNode>(objectToNode.size());
+                            for (WeakReference<TreeModelNode>[] wrs : objectToNode.values()) {
+                                for (WeakReference<TreeModelNode> wr : wrs) {
+                                    TreeModelNode tm = wr.get();
+                                    if (tm != null) {
+                                        nodes.add(tm);
+                                    }
+                                }
+                            }
+                            int change = tvEvent.getChange();
+                            for (TreeModelNode tmNode : nodes) {
+                                Collection<String> columnIDs = tvEvent.getColumnIDs();
+                                if (columnIDs.isEmpty() || (columnIDs.size() == 1 && columnIDs.contains(null))) {
+                                    tmNode.refresh(model);
+                                } else {
+                                    for (String column : columnIDs) {
+                                        if (column != null) {
+                                            tmNode.refreshColumn(column, change);
+                                        }
+                                    }
                                 }
                             }
                             return ; // We're done

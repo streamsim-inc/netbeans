@@ -84,6 +84,7 @@ import org.openide.util.RequestProcessor.Task;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.datatransfer.PasteType;
 import org.openide.util.lookup.Lookups;
+import org.openide.util.lookup.ProxyLookup;
 
 
 /**
@@ -228,12 +229,20 @@ public class TreeModelNode extends AbstractNode {
             }
             canReorder = false;
         }
+
+        Lookup additional;
+        try {
+            additional = model.getLookup(object);
+        } catch (UnknownTypeException ex) {
+            additional = Lookup.EMPTY;
+        }
+
         if (canReorder) {
             Index i = new IndexImpl(model, object);
             indexPtr[0] = i;
-            return Lookups.fixed(object, cnc, i);
+            return new ProxyLookup(Lookups.fixed(object, cnc, i), additional);
         } else {
-            return Lookups.fixed(object, cnc);
+            return new ProxyLookup(Lookups.fixed(object, cnc), additional);
         }
     }
     
@@ -903,6 +912,16 @@ public class TreeModelNode extends AbstractNode {
 
     @Override
     public Image getIcon(int type) {
+
+        try {
+            Image icon = model.getIcon(object, type);
+            if (icon != null) {
+                return icon;
+            }
+        } catch (UnknownTypeException ex) {
+            Logger.getLogger(TreeModelNode.class.getName()).log(Level.FINE, "no icon from model"); // NOI18N
+        }
+
         if (!iconLoaded) {
             try {
                 setModelIcon();
@@ -916,6 +935,16 @@ public class TreeModelNode extends AbstractNode {
 
     @Override
     public Image getOpenedIcon(int type) {
+
+        try {
+            Image icon = model.getOpenedIcon(object, type);
+            if (icon != null) {
+                return icon;
+            }
+        } catch (UnknownTypeException ex) {
+            Logger.getLogger(TreeModelNode.class.getName()).log(Level.FINE, "no openedIcon from model"); // NOI18N
+        }
+
         if (!iconLoaded) {
             try {
                 setModelIcon();

@@ -67,4 +67,7 @@ public interface CheckNodeModelFilter extends NodeModelFilter {
      */
     void setSelected(NodeModel original, Object node, Boolean selected) throws UnknownTypeException;
 
+    void setSelected(NodeModel original, Object... nodes) throws UnknownTypeException;
+
+    void setUnselected(NodeModel original, Object... nodes) throws UnknownTypeException;
 }

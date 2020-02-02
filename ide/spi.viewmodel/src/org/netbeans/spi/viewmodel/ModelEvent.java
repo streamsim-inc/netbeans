@@ -20,7 +20,9 @@
 package org.netbeans.spi.viewmodel;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EventObject;
+import java.util.LinkedHashSet;
 
 
 /**
@@ -79,9 +81,20 @@ public class ModelEvent extends EventObject {
         public static final int IS_READ_ONLY_MASK = 4;
         
         private Object node;
-        private String columnID;
+        private Collection<String> columnIDs = new LinkedHashSet<String>();
         private int change;
-        
+
+        @Deprecated
+        public TableValueChanged(
+                Object source,
+                Object node
+        ) {
+            super(source);
+            this.node = node;
+            this.columnIDs.add(null);
+            this.change = 0xffffffff;
+        }
+
         /**
          * Creates a new instance of TableValueChanged event.
          *
@@ -98,7 +111,15 @@ public class ModelEvent extends EventObject {
         ) {
             this(source, node, columnID, 0xffffffff);
         }
-        
+
+        public TableValueChanged(
+                Object source,
+                Object node,
+                Collection<String> columnIDs
+        ) {
+            this(source, node, columnIDs, 0xffffffff);
+        }
+
         /**
          * Creates a new instance of TableValueChanged event.
          *
@@ -116,7 +137,28 @@ public class ModelEvent extends EventObject {
         ) {
             super (source);
             this.node = node;
-            this.columnID = columnID;
+            this.columnIDs.add(columnID);
+            this.change = change;
+        }
+
+        /**
+         * Creates a new instance of TableValueChanged event.
+         *
+         * @param source a source if event.
+         * @param node a changed node instance
+         * @param columnID a changed column name
+         * @param change one of the *_MASK constants or their aggregation.
+         * @since 1.42
+         */
+        public TableValueChanged(
+                Object source,
+                Object node,
+                Collection<String> columnIDs,
+                int change
+        ) {
+            super(source);
+            this.node = node;
+            this.columnIDs.addAll(columnIDs);
             this.change = change;
         }
         
@@ -138,8 +180,8 @@ public class ModelEvent extends EventObject {
          *
          * @since 1.4
          */
-        public String getColumnID () {
-            return columnID;
+        public Collection<String> getColumnIDs() {
+            return columnIDs;
         }
         
         /**

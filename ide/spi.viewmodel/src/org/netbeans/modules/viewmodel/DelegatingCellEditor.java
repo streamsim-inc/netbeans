@@ -166,6 +166,7 @@ class DelegatingCellEditor implements TableCellEditor {
             }
             return status;
         }
+        Exceptions.printStackTrace(new IllegalStateException("No current editor."));
         return true;
     }
 
@@ -177,6 +178,7 @@ class DelegatingCellEditor implements TableCellEditor {
             currentEditor = null;
             return ;
         }
+        Exceptions.printStackTrace(new IllegalStateException("No current editor."));
     }
 
     @Override

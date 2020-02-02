@@ -22,6 +22,7 @@ package org.netbeans.modules.viewmodel;
 import java.awt.BorderLayout;
 import java.awt.Rectangle;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -33,6 +34,7 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.ComponentInputMap;
 import javax.swing.InputMap;
@@ -41,6 +43,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
@@ -53,6 +56,8 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.text.DefaultEditorKit;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+
+import org.netbeans.modules.viewmodel.util.Paste;
 
 import org.netbeans.spi.viewmodel.Models;
 import org.netbeans.spi.viewmodel.ColumnModel;
@@ -90,6 +95,21 @@ ExplorerManager.Provider, PropertyChangeListener {
 
     private static final Logger logger = Logger.getLogger(OutlineTable.class.getName());
     
+
+    static {
+        OutlineTableAccessor.setInstance(new OutlineTableAccessor() {
+            @Override
+            public OutlineView treeTable(OutlineTable outline) {
+                return outline.treeTable;
+            }
+
+            @Override
+            public TableColumn[] tableColumns(OutlineTable outline) {
+                return outline.tableColumns;
+            }
+        });
+    }
+
     private ExplorerManager     explorerManager;
     final MyTreeTable           treeTable; // Accessed from tests
     Node.Property[]             columns; // Accessed from tests
@@ -116,6 +136,7 @@ ExplorerManager.Provider, PropertyChangeListener {
             treeTable.setHorizontalScrollBarPolicy 
                 (JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             treeTable.setTreeHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            treeTable.setBorder(new JScrollPane().getBorder());
         add (treeTable, "Center");  //NOI18N
 //        ttv = new TreeTableView(); // To test only
 //        add(ttv, "East");
@@ -428,6 +449,25 @@ ExplorerManager.Provider, PropertyChangeListener {
         // Sort of hack(?) After close/open of the view the table becomes empty,
         // it looks like the root node stays unexpanded for some reason.
         //treeTable.expandNode(rootNode);
+            if (model.allowsSmartPaste()) {
+                final Models.CompoundModel _model = model;
+                getActionMap().put(DefaultEditorKit.pasteAction, new AbstractAction() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        Paste.pasteFromClipboard(treeTable.getOutline(), _model, columns);
+                    }
+                });
+                // Single selection for smart paste
+                Outline outline = treeTable.getOutline();
+                outline.setSelectionMode(model.getSelectionModel());
+                outline.setColumnSelectionAllowed(model.isColumnSelectionAllowed());
+            } else { // reset to default values
+                getActionMap().put(DefaultEditorKit.pasteAction, ExplorerUtils.actionPaste(getExplorerManager()));
+                Outline outline = treeTable.getOutline();
+                outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+                outline.setColumnSelectionAllowed(false);
+            }
+
         } finally {
             isSettingModelUp = false;
         }
@@ -1065,7 +1105,7 @@ ExplorerManager.Provider, PropertyChangeListener {
         TopComponent.getRegistry ().removePropertyChangeListener (this);
         ExplorerUtils.activateActions(getExplorerManager (), false);
         getExplorerManager ().removePropertyChangeListener (this);
-        setModel(null);
+        //setModel(null);
     }
     
     public boolean isExpanded (Object node) {
