@@ -25,7 +25,6 @@ import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import org.openide.util.CachedHiDPIIcon;
 import org.openide.util.Parameters;
@@ -39,19 +38,16 @@ import org.openide.util.Parameters;
  * down to 1x, 1.5x, or other HiDPI scaling factors as needed.
  */
 final class ScaledBitmapIcon extends CachedHiDPIIcon {
-    private final Image sourceImage;
+    private final ImageIcon sourceImage;
     private final int sourceWidth;
     private final int sourceHeight;
 
-    public ScaledBitmapIcon(Image sourceImage, int width, int height) {
+    public ScaledBitmapIcon(ImageIcon sourceImage, int width, int height) {
         super(width, height);
         Parameters.notNull("sourceImage", sourceImage);
         this.sourceImage = sourceImage;
-        /* Like ImageIcon, we block until the image is fully loaded. Just rely on ImageIcon's
-        implementation here (it will ll get a MediaTracker, call waitForID etc.). */
-        Icon imageIcon = new ImageIcon(sourceImage);
-        sourceWidth = imageIcon.getIconWidth();
-        sourceHeight = imageIcon.getIconHeight();
+        sourceWidth = sourceImage.getIconWidth();
+        sourceHeight = sourceImage.getIconHeight();
     }
 
     @Override
@@ -75,7 +71,7 @@ final class ScaledBitmapIcon extends CachedHiDPIIcon {
                 g.setTransform(AffineTransform.getScaleInstance(
                         scale * getIconWidth() / (double) sourceWidth,
                         scale * getIconHeight() / (double) sourceHeight));
-                g.drawImage(sourceImage, 0, 0, null);
+                sourceImage.paintIcon(null, g, deviceWidth, deviceWidth);
             } finally {
                 g.dispose();
             }
