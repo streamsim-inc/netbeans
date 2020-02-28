@@ -8,6 +8,8 @@ variables:
         -Djavac.compilerargs=-nowarn
         -Dbuild.compiler.deprecation=false
         -Dcluster.config=streamsim
+        -Dreleasejson=../netbeansrelease.json
+        -Dmetabuild.branch=release113-streamsim
 
 before_script:
   - apt-get update
@@ -29,10 +31,8 @@ build:
     - unzip -q netbeans-8.2-201609300101-cpp.zip
     - cp -R netbeans/dlight nbbuild/netbeans/
     # build zip
-    - zip -r netbeans.zip nbbuild/netbeans
-    - bash -c "ls -l"
-    - bash -c "ls -l nbbuild"
+    - zip -r nbbuild/netbeans-release113-streamsim.zip nbbuild/netbeans
   artifacts:
       paths:
-        - netbeans.zip
+        - nbbuild/netbeans-release113-streamsim.zip
         - nbbuild/netbeans
