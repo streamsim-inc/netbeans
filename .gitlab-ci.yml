@@ -15,6 +15,7 @@ before_script:
   - apt-get update
   - apt-get -q -y install ant zip
   - wget -q https://download.netbeans.org/netbeans/8.2/final/zip/netbeans-8.2-201609300101-cpp.zip
+  - wget -q http://www.java2s.com/Code/JarDownload/jsearch/jsearch-2.0_05.jar.zip
 
 stages:
   - build
@@ -30,8 +31,11 @@ build:
     # add dlight cluster from NetBeans 8.2
     - unzip -q netbeans-8.2-201609300101-cpp.zip
     - cp -R netbeans/dlight nbbuild/netbeans/
+    # add JavaHelp
+    - unzip -q jsearch-2.0_05.jar.zip
+    - cp jsearch-2.0_05.jar nbbuild/netbeans/harness/antlib/
     # build zip
-    - zip -r nbbuild/netbeans-release113-streamsim.zip nbbuild/netbeans
+    - cd nbbuild && zip -r netbeans-release113-streamsim.zip netbeans && cd ..
   artifacts:
       paths:
         - nbbuild/netbeans-release113-streamsim.zip
