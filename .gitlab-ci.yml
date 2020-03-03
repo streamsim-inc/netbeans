@@ -39,4 +39,3 @@ build:
   artifacts:
       paths:
         - nbbuild/netbeans-release113-streamsim.zip
-        - nbbuild/netbeans
