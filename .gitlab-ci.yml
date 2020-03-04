@@ -12,8 +12,8 @@ variables:
         -Dmetabuild.branch=release113-streamsim
 
 before_script:
-  - apt-get update
-  - apt-get -q -y install ant zip
+  - apt-get -qq update
+  - apt-get install ant zip -y
   - wget -q https://download.netbeans.org/netbeans/8.2/final/zip/netbeans-8.2-201609300101-cpp.zip
   - wget -q http://www.java2s.com/Code/JarDownload/jsearch/jsearch-2.0_05.jar.zip
 
@@ -23,8 +23,7 @@ stages:
 build:
   stage: build
   script:
-    # clean and build
-    - ant $OPTS clean
+    # build
     - ant $OPTS build
     # remove offending .xml
     - rm nbbuild/netbeans/platform/config/Modules/org-netbeans-libs-batik-read.xml
