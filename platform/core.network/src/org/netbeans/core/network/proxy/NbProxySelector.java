@@ -145,7 +145,7 @@ public final class NbProxySelector extends ProxySelector {
             case ProxySettings.AUTO_DETECT_PAC:
                 if (useSystemProxies ()) {
                     if (original != null) {
-                        res = original.select(uri);                   
+                        res = new ArrayList<>(original.select(uri));
                     }
                 } else {
                     ProxyAutoConfig pac = ProxyAutoConfig.get(getPacFile());
