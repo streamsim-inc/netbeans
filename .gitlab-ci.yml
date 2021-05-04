@@ -24,7 +24,7 @@ build:
   stage: build
   script:
     # build
-    - ant $OPTS build
+    - ant $OPTS build build-nbms
     # remove offending .xml
     - rm nbbuild/netbeans/platform/config/Modules/org-netbeans-libs-batik-read.xml
     # add dlight cluster from NetBeans 8.2
