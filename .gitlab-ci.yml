@@ -14,8 +14,8 @@ variables:
 before_script:
   - apt-get -qq update
   - apt-get install ant zip -y
-  - wget -q https://download.netbeans.org/netbeans/8.2/final/zip/netbeans-8.2-201609300101-cpp.zip
-  - wget -q http://www.java2s.com/Code/JarDownload/jsearch/jsearch-2.0_05.jar.zip
+  - wget -q https://s3.amazonaws.com/backup-streamsim.net/archive/netbeans-8.2-201609300101-dlight.zip
+  - wget -q https://s3.amazonaws.com/backup-streamsim.net/archive/jsearch-2.0_05.jar.zip
 
 stages:
   - build
@@ -28,8 +28,8 @@ build:
     # remove offending .xml
     - rm nbbuild/netbeans/platform/config/Modules/org-netbeans-libs-batik-read.xml
     # add dlight cluster from NetBeans 8.2
-    - unzip -q netbeans-8.2-201609300101-cpp.zip
-    - cp -R netbeans/dlight nbbuild/netbeans/
+    - unzip -q netbeans-8.2-201609300101-dlight.zip
+    - cp -R dlight nbbuild/netbeans/
     # add JavaHelp
     - unzip -q jsearch-2.0_05.jar.zip
     - cp jsearch-2.0_05.jar nbbuild/netbeans/harness/antlib/
